@@ -26,7 +26,7 @@ make install
 cd ${BUILD_HOME}/src
 git clone https://github.com/osmocom/rtl-sdr.git
 cd ${BUILD_HOME}/src/rtl-sdr
-PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="${BUILD_HOME}/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON
+PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="${BUILD_HOME}/build" -DINSTALL_UDEV_RULES=OFF -DDETACH_KERNEL_DRIVER=ON
 make -j ${CPU_COUNT}
 make install
 
