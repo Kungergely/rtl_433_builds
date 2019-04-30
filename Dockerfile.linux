@@ -1,0 +1,25 @@
+FROM ubuntu:16.04
+
+RUN apt-get update \
+    && apt-get -y --no-install-recommends install  build-essential curl g++ ca-certificates cmake git automake libtool libudev-dev pkg-config\
+    && apt-get clean \
+    && update-ca-certificates
+
+WORKDIR /app
+COPY ./build-rtl_433 /app/build-rtl_433
+
+RUN chmod 755 /app/build-rtl_433
+RUN AUTOINSTALL=yes /app/build-rtl_433
+
+COPY ./description-pak /app/rtl_433/build/description-pak
+
+RUN \
+	apt -y install checkinstall ruby ruby-dev rubygems rpm && \
+	gem install --no-ri --no-rdoc fpm && \
+	cd /app/rtl_433/src/rtl_433/build && \
+	checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d%H%M` --pkgarch=amd64 --pkgrelease=cvs --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y && \
+	fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-cvs_amd64.deb
+
+CMD         ["--help"]
+#ENTRYPOINT  ["/usr/bin/ffmpeg"]
+ENTRYPOINT  ["/bin/bash"]

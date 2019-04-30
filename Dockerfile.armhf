@@ -1,0 +1,95 @@
+FROM ubuntu:16.04
+
+# This is for 64-bit ARM Linux machine
+ENV ARCH armhf
+ENV HOST arm-linux-gnueabihf
+
+# The cross-compiling emulator
+RUN apt-get update \
+&& apt-get install -y \
+  qemu-user \
+  qemu-user-static \
+&& apt-get clean --yes
+
+RUN echo '# source urls for arm64 \n\
+    deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main \n\
+    deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main \n\
+    deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main \n\
+    deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main \n\
+    deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main \n\
+    deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main \n # end armhf section' >> /etc/apt/sources.list && \
+    sed -r 's/deb h/deb \[arch=amd64\] h/g' /etc/apt/sources.list > /tmp/sources-tmp.list && \
+    cp /tmp/sources-tmp.list /etc/apt/sources.list && \
+    sed -r 's/deb-src h/deb-src \[arch=amd64\] h/g' /etc/apt/sources.list > /tmp/sources-tmp.list && \
+    cat /etc/apt/sources.list && \
+    cp /tmp/sources-tmp.list /etc/apt/sources.list && \
+    echo "next"&&cat /etc/apt/sources.list
+
+RUN dpkg --add-architecture armhf && apt -y update && \
+		apt install -y \
+		g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf libudev-dev libudev-dev:armhf pkg-config checkinstall ruby ruby-dev rubygems rpm git cmake automake libtool
+
+# The CROSS_TRIPLE is a configured alias of the "aarch64-unknown-linux-gnueabi" target.
+ENV CC arm-linux-gnueabihf-gcc
+ENV CXX arm-linux-gnueabihf-g++ 
+
+ENV QEMU_LD_PREFIX "${CROSS_ROOT}/${CROSS_TRIPLE}/sysroot"
+ENV QEMU_SET_ENV "LD_LIBRARY_PATH=${CROSS_ROOT}/lib:${QEMU_LD_PREFIX}"
+
+ENV BUILD_HOME /root/rtl_433
+
+#ENV PKG_CONFIG_PATH /usr/lib/aarch64-linux-gnu/pkgconfig
+ENV PKG_CONFIG_PATH $BUILD_HOME/build/lib/pkgconfig
+
+RUN \
+	mkdir -p $BUILD_HOME/src && \
+	mkdir -p $BUILD_HOME/build && \
+	mkdir -p $BUILD_HOME/bin  
+
+RUN \
+	cd $BUILD_HOME/src && \
+	git clone https://github.com/libusb/libusb.git && \
+	cd  $BUILD_HOME/src/libusb && \
+	./autogen.sh --prefix=$BUILD_HOME/build --enable-shared --enable-static --with-compiler=$ARCH --host=$HOST && \
+	make -j2 && \
+	make install
+
+RUN \
+        cd $BUILD_HOME/src && \
+        git clone https://github.com/osmocom/rtl-sdr.git && \
+        cd  $BUILD_HOME/src/rtl-sdr && \ 
+	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && \
+        make -j2 && \
+        make install 
+
+RUN \
+        cd $BUILD_HOME/src && \
+        git clone  https://github.com/pothosware/SoapySDR.git && \
+        cd  $BUILD_HOME/src/SoapySDR && \
+	sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && \
+	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && \
+        make -j2 && \
+        make install 
+ 
+RUN \
+	cd $BUILD_HOME/build/lib && \
+	rm -rf *.so* && \
+        cd $BUILD_HOME/src && \
+        git clone https://github.com/merbanan/rtl_433.git && \
+        cd  $BUILD_HOME/src/rtl_433 && \
+	mkdir build && \
+	cd build && \
+	cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && \
+	sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && \
+	sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && \
+        make -j2
+#        make install 
+
+COPY ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
+
+RUN \
+	gem install --no-ri --no-rdoc fpm && \
+	cd $BUILD_HOME/src/rtl_433/build && \
+	checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d%H%M` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y && \
+	fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb 
+

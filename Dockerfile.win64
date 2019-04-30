@@ -1,0 +1,66 @@
+FROM ubuntu:xenial
+
+RUN \
+	useradd -ms /bin/bash builder && \
+	apt-get update && \
+	apt-get -y dist-upgrade && \
+	apt-get install -y wget make bzip2 gcc g++ texinfo m4 zip cmake automake git libtool libudev-dev pkg-config\
+	mingw-w64
+
+RUN \
+	chmod 777 /usr/local/include	
+
+#USER builder
+ENV BUILD_HOME /root/rtl_433
+ENV CC x86_64-w64-mingw32-gcc
+ENV CXX x86_64-w64-mingw32-g++
+
+RUN \
+	mkdir -p $BUILD_HOME/src && \
+	mkdir -p $BUILD_HOME/build && \
+	mkdir -p $BUILD_HOME/bin 
+
+RUN \
+	cd $BUILD_HOME/src && \
+	git clone https://github.com/libusb/libusb.git && \
+	cd  $BUILD_HOME/src/libusb && \
+	./autogen.sh --prefix="$BUILD_HOME/build" --bindir="$BUILD_HOME/bin" --enable-shared --enable-static --host=x86_64-w64-mingw32 && \
+	make -j2 && \
+	make install 
+
+RUN \
+        cd $BUILD_HOME/src && \
+        git clone https://github.com/osmocom/rtl-sdr.git && \
+        cd  $BUILD_HOME/src/rtl-sdr && \
+	PKG_CONFIG_PATH="$BUILD_HOME/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 && \
+        make -j2 && \
+        make install 
+
+#RUN \
+#        cd $BUILD_HOME/src && \
+#        git clone  https://github.com/pothosware/SoapySDR.git && \
+#        cd  $BUILD_HOME/src/SoapySDR && \
+#	sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && \
+#	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 && \
+ #       make -j2 && \
+  #      make install 
+
+RUN \
+	cd $BUILD_HOME/build/lib && \
+	rm -rf *.dll* && \
+	mv librtlsdr_static.a librtlsdr.a && \
+	cd $BUILD_HOME/build/bin && \
+	rm -rf *.dll* && \
+        cd $BUILD_HOME/src && \
+        git clone https://github.com/merbanan/rtl_433.git && \
+        cd  $BUILD_HOME/src/rtl_433 && \
+	mkdir build && \
+	cd build && \
+	cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && \
+        make -j2 && \
+        make install
+
+RUN \
+	cd $BUILD_HOME/build
+#	zip --symlinks -r $TARGET.zip . && \
+#	mv $TARGET.zip ~

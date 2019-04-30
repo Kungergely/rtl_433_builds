@@ -1,0 +1,8 @@
+Turns RTL2832 dongle into a 433.92MHz generic data receiver
+
+rtl_433 (despite the name) is a generic data receiver, mainly 
+for the 433.92 MHz, 868 MHz (SRD), 315 MHz, and 915 MHz ISM bands.
+It works with RTL-SDR and/or SoapySDR. Activly tested and 
+supported are Realtek RTL2832 based DVB dongles (using RTL-SDR)
+and LimeSDR, PlutoSDR, HackRF One (using SoapySDR drivers),
+as well as SoapyRemote.
