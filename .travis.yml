@@ -98,7 +98,7 @@ matrix:
         - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
-       before_deploy:
+      before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
         - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
@@ -133,7 +133,7 @@ matrix:
         - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
-       before_deploy:
+      before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
         - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
