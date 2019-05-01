@@ -117,14 +117,25 @@ matrix:
     - compiler: gcc
       env: ARCH=aarch64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
+      addons:
+        apt:
+          update: yes:
+          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted universe multiverse'
+          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted universe multiverse'
+          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-ports main restricted universe multiverse'
+          packages:
+            - g++-arm-linux-gnueabihf
+            - gcc-arm-linux-gnueabihf
+            - libudev-dev
+            - pkg-config
+            - checkinstall
+            - ruby-dev
+            - rubygems
+            - rpm
+            - automake
+            - libtool
       install:
-        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - sudo dpkg --add-architecture arm64 && sudo apt -y update && sudo apt install -y g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf libudev-dev libudev-dev:arm64 pkg-config checkinstall ruby ruby-dev rubygems rpm git cmake automake libtool
+        - sudo dpkg --add-architecture arm64 && sudo apt -y update && sudo apt install -y libudev-dev:arm64
         - gem install --no-ri --no-rdoc fpm
       script:
         - mkdir -p $BUILD_HOME/src && mkdir -p ${BUILD_HOME}/build/bin
