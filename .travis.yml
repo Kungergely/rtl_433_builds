@@ -81,14 +81,35 @@ matrix:
     - compiler: gcc
       env: ARCH=armhf HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
+      addons:
+        apt:
+          update: true
+          packages:
+            - curl
+            - automake
+            - libtool
+            - libudev-dev
+            - pkg-config
+            - g++-arm-linux-gnueabihf
+            - gcc-arm-linux-gnueabihf
+            - pkg-config
+            - checkinstall
+            - ruby-dev
+            - rubygems
+            - rpm 
+
+# Ugly, yeah, but there doesn't seem to be any other way.
+      before_install:
+        - sudo echo "" > /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty-updates main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-updates main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 6B05F25D762E3157
       install:
-        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
-        - sudo dpkg --add-architecture armhf && sudo apt -y update && sudo apt install -y g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf libudev-dev libudev-dev:armhf pkg-config checkinstall ruby ruby-dev rubygems rpm git cmake automake libtool
+        - sudo dpkg --add-architecture armhf && sudo apt -y update && sudo apt install -y libudev-dev:armhf
         - gem install --no-ri --no-rdoc fpm
       script:
         - mkdir -p $BUILD_HOME/src && mkdir -p ${BUILD_HOME}/build/bin
@@ -115,27 +136,35 @@ matrix:
 
 # 64-bit ARM package generation
     - compiler: gcc
-      env: ARCH=aarch64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      env: ARCH=arm64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
       addons:
         apt:
-          update: yes
-          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted universe multiverse'
-          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted universe multiverse'
-          sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-ports main restricted universe multiverse'
+          update: true
           packages:
+            - curl
+            - automake
+            - libtool
+            - libudev-dev
+            - pkg-config
             - g++-arm-linux-gnueabihf
             - gcc-arm-linux-gnueabihf
-            - libudev-dev
             - pkg-config
             - checkinstall
             - ruby-dev
             - rubygems
-            - rpm
-            - automake
-            - libtool
+            - rpm 
+
+# Ugly, yeah, but there doesn't seem to be any other way.
       before_install:
-        - sudo echo "91.189.88.151 ports.ubuntu.com" >> /etc/hosts
+        - sudo echo "" > /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports trusty main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty-updates main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports trusty-updates main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+        - sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 6B05F25D762E3157
       install:
         - sudo dpkg --add-architecture arm64 && sudo apt -y update && sudo apt install -y libudev-dev:arm64
         - gem install --no-ri --no-rdoc fpm
