@@ -32,8 +32,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-#        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
-#       - git tag $TRAVIS_TAG
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y.%m%.d.')}
       deploy:
         - provider: releases
           api_key: $GITHUB_TOKEN
@@ -67,8 +66,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-#        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
-#        - git tag $TRAVIS_TAG
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y.%m%.d.')}
       deploy:
         provider: releases
         api_key: $GITHUB_TOKEN
@@ -123,7 +121,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
- #       - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y.%m%.d.')}
       deploy:
         - provider: releases
           api_key: $GITHUB_TOKEN
@@ -135,7 +133,7 @@ matrix:
           skip_cleanup: true
         - provider: releases
           api_key: $GITHUB_TOKEN
-          file: rtl-433.armhf
+          file: rtl_433.armhf
           skip_cleanup: true
 
 # 64-bit ARM package generation
@@ -185,7 +183,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
- #       - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y.%m%.d.')}
       deploy:
         - provider: releases
           api_key: $GITHUB_TOKEN
@@ -197,5 +195,5 @@ matrix:
           skip_cleanup: true
         - provider: releases
           api_key: $GITHUB_TOKEN
-          file: rtl-433.arm64
+          file: rtl_433.arm64
           skip_cleanup: true
