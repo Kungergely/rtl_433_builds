@@ -4,10 +4,9 @@ CPU_COUNT=$(nproc)
 BUILD_HOME=${TRAVIS_BUILD_DIR}
 
 mkdir -p ${BUILD_HOME}/src
-mkdir -p ${BUILD_HOME}/build
-mkdir -p ${BUILD_HOME}/bin
+mkdir -p ${BUILD_HOME}/build/bin
 
-export PATH=$PATH:${BUILD_HOME}/build:${BUILD_HOME}/build/lib:${BUILD_HOME}/build/include:${BUILD_HOME}/bin
+export PATH=$PATH:${BUILD_HOME}/build:${BUILD_HOME}/build/lib:${BUILD_HOME}/build/include:${BUILD_HOME}/build/bin
 
 /bin/echo
 /bin/echo -e "\e[93mCompiling libusb (for rtl-sdr)...\e[39m"
