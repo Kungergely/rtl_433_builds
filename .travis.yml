@@ -80,6 +80,7 @@ matrix:
 # ARM Hard Float (32-bit) package generation
     - compiler: gcc
       env: ARCH=armhf HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      dist: xenial
       install:
         - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
         - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
@@ -115,6 +116,7 @@ matrix:
 # 64-bit ARM package generation
     - compiler: gcc
       env: ARCH=aarch64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      dist: xenial
       install:
         - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
         - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
