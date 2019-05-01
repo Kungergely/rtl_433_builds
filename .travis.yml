@@ -117,7 +117,7 @@ matrix:
         - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
         - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
-        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
+        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d`-git_$ARCH.deb
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
@@ -144,14 +144,14 @@ matrix:
             - libtool
             - libudev-dev
             - pkg-config
-            - g++-arm-linux-gnueabihf
-            - gcc-arm-linux-gnueabihf
+            - g++-aarch64-linux-gnu
+            - gcc-aarch64-linux-gnu
             - pkg-config
             - checkinstall
             - ruby-dev
             - rubygems
             - rpm
-            - binutils-arm-linux-gnueabihf
+            - binutils-aarch64-linux-gnu
 
 # Ugly, yeah, but there doesn't seem to be any other way.
       before_install:
@@ -174,7 +174,7 @@ matrix:
         - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT} VERBOSE=1
         - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
-        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
+        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d`-git_$ARCH.deb
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
