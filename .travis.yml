@@ -61,13 +61,13 @@ matrix:
         - mkdir -p $BUILD_HOME/src && mkdir -p $BUILD_HOME/build && mkdir -p $BUILD_HOME/bin && mkdir -p $BUILD_HOME/build/rtl_433
         - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd $BUILD_HOME/src/libusb && ./autogen.sh --prefix="$BUILD_HOME/build" --bindir="$BUILD_HOME/bin" --enable-shared --enable-static --host=x86_64-w64-mingw32 && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build/lib && rm -rf *.dll* &&cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && PKG_CONFIG_PATH="$BUILD_HOME/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 && make -j${CPU_COUNT} && sudo make install
-        - cd $BUILD_HOME/build/lib && rm -rf *.dll* && mv librtlsdr_static.a librtlsdr.a && cd $BUILD_HOME/build/bin && rm -rf *.dll* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd  $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build/rtl_433" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/build/lib && rm -rf *.dll* && mv librtlsdr_static.a librtlsdr.a && cd $BUILD_HOME/build/bin && rm -rf *.dll* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd  $BUILD_HOME/src/rtl_433 && mkdir build && cd build && PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build/rtl_433" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build && zip --symlinks rtl_433_`date +%Y%m%d`-win64.zip rtl_433
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
         - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
-        - git tag $TRAVIS_TAG
+#        - git tag $TRAVIS_TAG
       deploy:
         provider: releases
         api_key: $GITHUB_TOKEN
