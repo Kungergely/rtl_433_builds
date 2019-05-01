@@ -119,7 +119,7 @@ matrix:
       dist: xenial
       addons:
         apt:
-          update: yes:
+          update: yes
           sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted universe multiverse'
           sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted universe multiverse'
           sourceline: 'deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-ports main restricted universe multiverse'
