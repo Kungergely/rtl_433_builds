@@ -12,7 +12,6 @@ matrix:
         apt:
           update: true
           packages:
-            - curl
             - automake
             - libtool
             - libudev-dev
@@ -26,7 +25,7 @@ matrix:
       script:
         - chmod ugo+x build-rtl_433-linux.sh
         - ./build-rtl_433-linux.sh
-        - cp ./description-pak ${TRAVIS_BUILD_DIR}/build/description-pak
+        - cp $BUILD_HOME/description-pak ${TRAVIS_BUILD_DIR}/build/description-pak
         - cd ${TRAVIS_BUILD_DIR}/src/rtl_433/build
         - sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=amd64 --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d`-git_amd64.deb 
@@ -53,7 +52,6 @@ matrix:
         apt:
           update: true
           packages:
-            - curl
             - automake
             - libtool
             - libudev-dev
@@ -64,7 +62,7 @@ matrix:
         - mkdir -p $BUILD_HOME/src && mkdir -p $BUILD_HOME/build && mkdir -p $BUILD_HOME/bin && mkdir -p $BUILD_HOME/build/rtl_433
         - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd $BUILD_HOME/src/libusb && ./autogen.sh --prefix="$BUILD_HOME/build" --bindir="$BUILD_HOME/bin" --enable-shared --enable-static --host=x86_64-w64-mingw32 && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build/lib && rm -rf *.dll* &&cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && PKG_CONFIG_PATH="$BUILD_HOME/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 && make -j${CPU_COUNT} && sudo make install
-        - cd $BUILD_HOME/build/lib && rm -rf *.dll* && mv librtlsdr_static.a librtlsdr.a && cd $BUILD_HOME/build/bin && rm -rf *.dll* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd  $BUILD_HOME/src/rtl_433 && mkdir build && cd build && PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build/rtl_433" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/build/lib && rm -rf *.dll* && mv librtlsdr_static.a librtlsdr.a && cd $BUILD_HOME/build/bin && rm -rf *.dll* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build/rtl_433" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build && zip -r --symlinks rtl_433_`date +%Y%m%d`-win64.zip rtl_433
       before_deploy:
         - git config --local user.name "Kungergely"
@@ -79,13 +77,12 @@ matrix:
 
 # ARM Hard Float (32-bit) package generation
     - compiler: gcc
-      env: ARCH=armhf HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      env: ARCH=armhf HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ LD=arm-linux-gnueabihf-ld BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
       addons:
         apt:
           update: true
           packages:
-            - curl
             - automake
             - libtool
             - libudev-dev
@@ -97,6 +94,7 @@ matrix:
             - ruby-dev
             - rubygems
             - rpm 
+            - binutils-arm-linux-gnueabihf
 
 # Ugly, yeah, but there doesn't seem to be any other way.
       before_install:
@@ -117,7 +115,7 @@ matrix:
         - cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && sudo make install
         - cd $BUILD_HOME/src && git clone  https://github.com/pothosware/SoapySDR.git && cd  $BUILD_HOME/src/SoapySDR && sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
-        - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
+        - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
       before_deploy:
@@ -136,13 +134,12 @@ matrix:
 
 # 64-bit ARM package generation
     - compiler: gcc
-      env: ARCH=arm64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      env: ARCH=arm64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ LD=arm-linux-gnueabihf-ld BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
       addons:
         apt:
           update: true
           packages:
-            - curl
             - automake
             - libtool
             - libudev-dev
@@ -153,7 +150,8 @@ matrix:
             - checkinstall
             - ruby-dev
             - rubygems
-            - rpm 
+            - rpm
+            - binutils-arm-linux-gnueabihf
 
 # Ugly, yeah, but there doesn't seem to be any other way.
       before_install:
@@ -174,7 +172,7 @@ matrix:
         - cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && sudo make install
         - cd $BUILD_HOME/src && git clone  https://github.com/pothosware/SoapySDR.git && cd  $BUILD_HOME/src/SoapySDR && sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
-        - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
+        - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
       before_deploy:
