@@ -32,7 +32,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+#        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
 #       - git tag $TRAVIS_TAG
       deploy:
         - provider: releases
@@ -67,7 +67,7 @@ matrix:
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+#        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
 #        - git tag $TRAVIS_TAG
       deploy:
         provider: releases
@@ -118,10 +118,12 @@ matrix:
         - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d`-git_$ARCH.deb
+        - mv rtl-433-`date +%Y%m%d`-git.armhf.rpm rtl-433-`date +%Y%m%d`-git.armv7hl.rpm
+        - cp /usr/local/bin/rtl_433 rtl_433.armhf
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+ #       - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
       deploy:
         - provider: releases
           api_key: $GITHUB_TOKEN
@@ -131,10 +133,14 @@ matrix:
           api_key: $GITHUB_TOKEN
           file: rtl-433-`date +%Y%m%d`-git.armv7hl.rpm
           skip_cleanup: true
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433.armhf
+          skip_cleanup: true
 
 # 64-bit ARM package generation
     - compiler: aarch64-linux-gnu-gcc
-      env: ARCH=arm64 HOST=arm-linux-gnueabihf BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      env: ARCH=arm64 HOST=arm-linux-gnueabihf CXX=aarch64-linux-gnu-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
       dist: xenial
       addons:
         apt:
@@ -171,14 +177,15 @@ matrix:
         - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd  $BUILD_HOME/src/libusb && ./autogen.sh --prefix=$BUILD_HOME/build --enable-shared --enable-static --with-compiler=$ARCH --host=$HOST --build=x86_64-linux-gnu && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && sudo make install
         - cd $BUILD_HOME/src && git clone  https://github.com/pothosware/SoapySDR.git && cd  $BUILD_HOME/src/SoapySDR && sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && make install
-        - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT} VERBOSE=1
+        - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
         - cp $BUILD_HOME/description-pak $BUILD_HOME/src/rtl_433/build/description-pak
         - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
         - fpm -s deb -t rpm rtl-433_`date +%Y%m%d`-git_$ARCH.deb
+        - cp /usr/local/bin/rtl_433 rtl_433.arm64
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
-        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+ #       - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
       deploy:
         - provider: releases
           api_key: $GITHUB_TOKEN
@@ -187,4 +194,8 @@ matrix:
         - provider: releases
           api_key: $GITHUB_TOKEN
           file: rtl-433-`date +%Y%m%d`-git.$ARCH.rpm
+          skip_cleanup: true
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433.arm64
           skip_cleanup: true
