@@ -134,6 +134,8 @@ matrix:
             - rpm
             - automake
             - libtool
+      before_install:
+        - sudo echo "91.189.88.151 ports.ubuntu.com" >> /etc/hosts
       install:
         - sudo dpkg --add-architecture arm64 && sudo apt -y update && sudo apt install -y libudev-dev:arm64
         - gem install --no-ri --no-rdoc fpm
