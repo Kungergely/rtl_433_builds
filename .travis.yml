@@ -4,6 +4,7 @@ git:
   depth: false
 matrix:
   include:
+# Linux build including DEB and RPM package generation
     - compiler: gcc
       env: SOAPYSDR=ON
       dist: xenial
@@ -41,8 +42,10 @@ matrix:
           skip_cleanup: true
         - provider: releases
           api_key: $GITHUB_TOKEN
-          file: rtl-433-`date +%Y%m%d`-git.x86-64.rpm
+          file: rtl-433-`date +%Y%m%d`-git.x86_64.rpm
           skip_cleanup: true
+
+# MinGW build for Windows (64-bit). No SoapySDR yet.
     - compiler: x86_64-w64-mingw32-gcc
       env: CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc)
       dist: xenial
@@ -62,7 +65,7 @@ matrix:
         - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd $BUILD_HOME/src/libusb && ./autogen.sh --prefix="$BUILD_HOME/build" --bindir="$BUILD_HOME/bin" --enable-shared --enable-static --host=x86_64-w64-mingw32 && make -j${CPU_COUNT} && make install
         - cd $BUILD_HOME/build/lib && rm -rf *.dll* &&cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && PKG_CONFIG_PATH="$BUILD_HOME/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 && make -j${CPU_COUNT} && sudo make install
         - cd $BUILD_HOME/build/lib && rm -rf *.dll* && mv librtlsdr_static.a librtlsdr.a && cd $BUILD_HOME/build/bin && rm -rf *.dll* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd  $BUILD_HOME/src/rtl_433 && mkdir build && cd build && PKG_CONFIG_PATH="${BUILD_HOME}/build/lib/pkgconfig" cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build/rtl_433" -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=OFF  -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_SYSTEM_PROCESSOR=amd64 .. && make -j${CPU_COUNT} && make install
-        - cd $BUILD_HOME/build && zip --symlinks rtl_433_`date +%Y%m%d`-win64.zip rtl_433
+        - cd $BUILD_HOME/build && zip -r --symlinks rtl_433_`date +%Y%m%d`-win64.zip rtl_433
       before_deploy:
         - git config --local user.name "Kungergely"
         - git config --local user.email "kun.gergely@kgservermanagement.com"
@@ -73,4 +76,73 @@ matrix:
         api_key: $GITHUB_TOKEN
         file: rtl_433_`date +%Y%m%d`-win64.zip
         skip_cleanup: true
- 
+
+# ARM Hard Float (32-bit) package generation
+    - compiler: gcc
+      env: ARCH=armhf HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      install:
+        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - sudo dpkg --add-architecture armhf && sudo apt -y update && sudo apt install -y g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf libudev-dev libudev-dev:armhf pkg-config checkinstall ruby ruby-dev rubygems rpm git cmake automake libtool
+        - gem install --no-ri --no-rdoc fpm
+      script:
+        - mkdir -p $BUILD_HOME/src && mkdir -p ${BUILD_HOME}/build/bin
+        - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd  $BUILD_HOME/src/libusb && ./autogen.sh --prefix=$BUILD_HOME/build --enable-shared --enable-static --with-compiler=$ARCH --host=$HOST && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && sudo make install
+        - cd $BUILD_HOME/src && git clone  https://github.com/pothosware/SoapySDR.git && cd  $BUILD_HOME/src/SoapySDR && sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
+        - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
+        - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
+        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
+       before_deploy:
+        - git config --local user.name "Kungergely"
+        - git config --local user.email "kun.gergely@kgservermanagement.com"
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+      deploy:
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433_`date +%Y%m%d`-git_$ARCH.deb
+          skip_cleanup: true
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433-`date +%Y%m%d`-git.armv7hl.rpm
+          skip_cleanup: true
+
+# 64-bit ARM package generation
+    - compiler: gcc
+      env: ARCH=aarch64 HOST=arm-linux-gnueabihf CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ BUILD_HOME=${TRAVIS_BUILD_DIR} CPU_COUNT=$(nproc) PKG_CONFIG_PATH=$BUILD_HOME/build/lib/pkgconfig
+      install:
+        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - echo "deb-src [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-security main" | sudo tee /etc/apt/sources.list.d/crosscompile.list
+        - sudo dpkg --add-architecture arm64 && sudo apt -y update && sudo apt install -y g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf libudev-dev libudev-dev:arm64 pkg-config checkinstall ruby ruby-dev rubygems rpm git cmake automake libtool
+        - gem install --no-ri --no-rdoc fpm
+      script:
+        - mkdir -p $BUILD_HOME/src && mkdir -p ${BUILD_HOME}/build/bin
+        - cd $BUILD_HOME/src && git clone https://github.com/libusb/libusb.git && cd  $BUILD_HOME/src/libusb && ./autogen.sh --prefix=$BUILD_HOME/build --enable-shared --enable-static --with-compiler=$ARCH --host=$HOST && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/src && git clone https://github.com/osmocom/rtl-sdr.git && cd  $BUILD_HOME/src/rtl-sdr && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DINSTALL_UDEV_RULES=ON -DDETACH_KERNEL_DRIVER=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && sudo make install
+        - cd $BUILD_HOME/src && git clone  https://github.com/pothosware/SoapySDR.git && cd  $BUILD_HOME/src/SoapySDR && sed -i "s/(SoapySDR SHARED/(SoapySDR STATIC/" lib/CMakeLists.txt && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="$BUILD_HOME/build" -DCMAKE_SYSTEM_PROCESSOR=$ARCH && make -j${CPU_COUNT} && make install
+        - cd $BUILD_HOME/build/lib && rm -rf *.so* && cd $BUILD_HOME/src && git clone https://github.com/merbanan/rtl_433.git && cd $BUILD_HOME/src/rtl_433 && mkdir build && cd build && cmake -G "Unix Makefiles" -DCMAKE_PREFIX_PATH=$BUILD_HOME/build -DLIBUSB_INCLUDE_DIR="$BUILD_HOME/build/include/libusb-1.0" -DENABLE_RTLSDR=ON -DENABLE_SOAPYSDR=ON -DCMAKE_SYSTEM_PROCESSOR=$ARCH .. && sed -i "s/-lstdc++//g" src/CMakeFiles/rtl_433.dir/link.txt && sed -i "s/$/ -lstdc++ -l:libudev.so/" src/CMakeFiles/rtl_433.dir/link.txt && make -j${CPU_COUNT}
+        - cp ./description-pak $BUILD_HOME/src/rtl_433/build/description-pak
+        - cd $BUILD_HOME/src/rtl_433/build && sudo checkinstall --install=no --pkgname=rtl_433 --pkgversion=`date +%Y%m%d` --pkgarch=$ARCH --pkgrelease=git --pkglicense=GPL2 --pkggroup=Productivity/Hamradio/Other --maintainer="Gergely\ Kun\ \<kun.gergely\@kgservermanagement.com\>" --nodoc -y
+        - fpm -s deb -t rpm rtl-433_`date +%Y%m%d%H%M`-git_$ARCH.deb
+       before_deploy:
+        - git config --local user.name "Kungergely"
+        - git config --local user.email "kun.gergely@kgservermanagement.com"
+        - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d')-$(git log --format=%h -1)}
+      deploy:
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433_`date +%Y%m%d`-git_$ARCH.deb
+          skip_cleanup: true
+        - provider: releases
+          api_key: $GITHUB_TOKEN
+          file: rtl-433-`date +%Y%m%d`-git.$ARCH.rpm
+          skip_cleanup: true
